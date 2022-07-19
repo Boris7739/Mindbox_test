@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ .Release.Name }}-1"
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.labels }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.labels }}
+#  strategy:
+#    type: RollingUpdate # стратегия обновления приложения при которой нет downTime (по умолчанию она уже стоит)
+    spec:
+      containers:
+      - name: "{{ .Release.Name }}-container"
+        image: "{{ .Values.container.image }}:{{ .Values.container.tag }}"
+        ports:
+        - containerPort: {{ .Values.container.port }}
+        terminationMessagePolicy: FallbackToLogsOnError # При фейле контейнера в его describe покажет 2kb/80 строчек логов приложения
+        resources:
+{{ toYaml .Values.resources | indent 10}}
+        readinessProbe:
+            failureThreshold: 5 # Делает 5 проверок
+            httpGet:
+              path: /
+              port: {{ .Values.container.port }}
+            periodSeconds: 10 # Период проверки
+            successThreshold: 2 # Должно быть успешных проверок
+            timeoutSeconds: 3
+            initialDelaySeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /
+            port: {{ .Values.container.port }}
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 3
+          initialDelaySeconds: 10 # Задержка после старта для начала проверок
+      restartPolicy: Always # Перезапуск всегда
+        
