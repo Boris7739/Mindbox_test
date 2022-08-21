@@ -15,7 +15,7 @@ spec:
 #    type: RollingUpdate # стратегия обновления приложения при которой нет downTime (по умолчанию она уже стоит)
     spec:
       containers:
-      - name: "{{ .Release.Name }}-container"
+      - name: "{{ .Release.Name }}"
         image: "{{ .Values.container.image }}:{{ .Values.container.tag }}"
         ports:
         - containerPort: {{ .Values.container.port }}

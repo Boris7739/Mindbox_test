@@ -1,0 +1,57 @@
+# demonset - автоматически подстраивает кол во реплик вод кол во нод
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app: node-exporter
+  name: node-exporter
+spec:
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: node-exporter
+  template:
+    metadata:
+      labels:
+        app: node-exporter
+    spec:
+      containers:
+      - args:
+        - --args.one=/path
+        - --args.two=/path
+        name: node-exporter
+        image: bitnami/node-exporter
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: first # имена одинаковые с чем маунтится
+          mountPath: /output
+        - name: second # имена одинаковые с чем маунтится
+          mountPath: /output/second
+        resources:
+          limits:
+            cpu: 10m
+            memory: 64Mi
+          requests:
+            cpu: 10m
+            memory: 64Mi
+      hostNetwork: true # прокидывается сетевой интерфейс узла.
+      hostPID: true # прокидывается ПИДЫ узла.
+      nodeSelector:
+        kubernetes.io/os: linux # метка кубера. выставляется вручную
+      securityContext: # запуск не от рута
+        runAsNonRoot: true
+        runAsUser: 65534 #ПИД юзера под кем запустить
+      tolerations: # запускаться на мастерах
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+      volumes:
+      - name: first
+        hostPath:
+        path: /proc
+      - name: second
+        hostPath:
+        path: /sys
